@@ -6,6 +6,10 @@ using Amazon.Extensions.NETCore.Setup;
 using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Amazon.SQS;
+using Amazon.SQS.Model;
+using System.Runtime.InteropServices;
+using JobManager.API.Workes;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +33,8 @@ builder.Configuration.AddSecretsManager(null, RegionEndpoint.SAEast1, config =>
 
 var connectionString = builder.Configuration.GetConnectionString("AppDb");
 builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlServer(connectionString));
+
+builder.Services.AddHostedService<JobApplicationNotificationWorker>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -69,7 +75,7 @@ app.MapGet("/api/jobs", async (AppDbContext context) =>
     return Results.Ok(jobs);
 });
 
-app.MapPost("/api/jobs/{id}/applications", async (int id, JobAplication application,[FromServices] AppDbContext context) =>
+app.MapPost("/api/jobs/{id}/applications", async (int id, JobAplication application,[FromServices] AppDbContext context, [FromServices] IConfiguration configuration) =>
 {
     var job = await context.Jobs.SingleOrDefaultAsync(j => j.Id == id);
     if (job == null)
@@ -79,6 +85,19 @@ app.MapPost("/api/jobs/{id}/applications", async (int id, JobAplication applicat
     application.JobId = id;
     await context.JobApplications.AddAsync(application);
     await context.SaveChangesAsync();
+
+    var sqs = new AmazonSQSClient(RegionEndpoint.SAEast1);
+
+    var queueUrlResponse = await sqs.GetQueueUrlAsync("formacaoawsdotnet");
+    var queue = queueUrlResponse.QueueUrl;
+
+    var request = new SendMessageRequest
+    {
+        QueueUrl = queue,
+        MessageBody = $"New job application received for job {id}. Candidate: {application.CandidateName}, Email: {application.CandidateEmail}"
+    };
+
+    var result = await sqs.SendMessageAsync(request);
     return Results.Created($"/api/jobs/{id}/applications/{application.Id}", application);
 });
 
