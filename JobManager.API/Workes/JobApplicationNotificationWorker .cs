@@ -24,7 +24,7 @@ namespace JobManager.API.Workes
                 var request = new ReceiveMessageRequest
                 {
                     QueueUrl = queueUrl,
-                    MaxNumberOfMessages = 10,
+                    MessageAttributeNames = ["All"],
                     WaitTimeSeconds = 20
                 };
                 var response = await client.ReceiveMessageAsync(request, stoppingToken);

@@ -25,11 +25,11 @@ builder.Configuration.AddSystemsManager(source =>
     source.ReloadAfter = TimeSpan.FromSeconds(30);
 });
 
-builder.Configuration.AddSecretsManager(null, RegionEndpoint.SAEast1, config =>
-{
-    config.KeyGenerator = (secret, name) => name.Replace("/", ":");
-    config.PollingInterval = TimeSpan.FromMinutes(30);
-});
+//builder.Configuration.AddSecretsManager(null, RegionEndpoint.SAEast1, config =>
+//{
+//    config.KeyGenerator = (secret, name) => name.Replace("/", ":");
+//    config.PollingInterval = TimeSpan.FromMinutes(30);
+//});
 
 var connectionString = builder.Configuration.GetConnectionString("AppDb");
 builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlServer(connectionString));
