@@ -12,6 +12,7 @@
 	<PackageReference Include="AWSSDK.SimpleSystemsManagement" Version="3.7.403.42" />
 	<PackageReference Include="Amazon.Extensions.Configuration.SystemsManager" Version="6.2.2" />
 	<PackageReference Include="AWSSDK.SecretsManager" Version="3.7.400.97" />
+	<PackageReference Include="AWSSDK.S3" Version="3.7.412.4" />
 	<PackageReference Include="Kralizek.Extensions.Configuration.AWSSecretsManager" Version="1.7.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.31">
       <PrivateAssets>all</PrivateAssets>

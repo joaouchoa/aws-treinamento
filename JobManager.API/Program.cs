@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Amazon.Extensions.NETCore.Setup;
 using Amazon;
+using Amazon.S3;
+using Amazon.S3.Model;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -82,24 +84,39 @@ app.MapPost("/api/jobs/{id}/applications", async (int id, JobAplication applicat
 
 app.MapPost("/api/jobs/{id}/applications/upload", async (int id, IFormFile file, [FromServices] AppDbContext context) =>
 {
-    if(file == null || file.Length == 0)
+    if (file == null || file.Length == 0)
     {
         return Results.BadRequest();
     }
 
     var extension = Path.GetExtension(file.FileName);
-    
+
     var validExtensions = new List<string> { ".pdf", ".doc", ".docx" };
     if (!validExtensions.Contains(extension.ToLower()))
     {
         return Results.BadRequest();
     }
 
+    var client = new AmazonS3Client(RegionEndpoint.SAEast1);
+
+    var bucketName = "formacao-aws-cv-jdu";
     var key = $"job-application/{id}-{file.FileName}";
+
+    using (var stream = file.OpenReadStream())
+    {
+        var request = new Amazon.S3.Model.PutObjectRequest
+        {
+            BucketName = bucketName,
+            Key = key,
+            InputStream = stream,
+            ContentType = file.ContentType
+        };
+        await client.PutObjectAsync(request);
+    }
 
     var application = await context.JobApplications.SingleOrDefaultAsync(ja => ja.Id == id);
 
-    if(application is null)
+    if (application is null)
     {
         return Results.NotFound();
     }
@@ -109,6 +126,31 @@ app.MapPost("/api/jobs/{id}/applications/upload", async (int id, IFormFile file,
     await context.SaveChangesAsync();
 
     return Results.NoContent();
+}).DisableAntiforgery();
+
+app.MapGet("/api/job-aplications/cvs/{id}", async (int id, string email, [FromServices] AppDbContext context) => 
+{
+    var urlBase = "https://formacao-aws-cv-jdu.s3.sa-east-1.amazonaws.com";
+
+    var aplication = await context.JobApplications.FirstOrDefaultAsync(ja => ja.CandidateEmail == email);
+
+    if(aplication == null)
+    {
+        return Results.NotFound();
+    }   
+
+    var fullkey = $"{urlBase}/{aplication.CVUrl}";
+    var bucketName = "formacao-aws-cv-jdu";
+
+    var getRequest = new GetObjectRequest
+    {
+        BucketName = bucketName,
+        Key = aplication.CVUrl
+    };
+
+    var response = await new AmazonS3Client(RegionEndpoint.SAEast1).GetObjectAsync(getRequest);
+
+    return Results.File(response.ResponseStream, response.Headers.ContentType);
 });
 
 app.UseAuthorization();
