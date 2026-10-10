@@ -130,8 +130,6 @@ app.MapPost("/api/jobs/{id}/applications/upload", async (int id, IFormFile file,
 
 app.MapGet("/api/job-aplications/cvs/{id}", async (int id, string email, [FromServices] AppDbContext context) => 
 {
-    var urlBase = "https://formacao-aws-cv-jdu.s3.sa-east-1.amazonaws.com";
-
     var aplication = await context.JobApplications.FirstOrDefaultAsync(ja => ja.CandidateEmail == email);
 
     if(aplication == null)
@@ -139,7 +137,6 @@ app.MapGet("/api/job-aplications/cvs/{id}", async (int id, string email, [FromSe
         return Results.NotFound();
     }   
 
-    var fullkey = $"{urlBase}/{aplication.CVUrl}";
     var bucketName = "formacao-aws-cv-jdu";
 
     var getRequest = new GetObjectRequest
