@@ -13,6 +13,7 @@ using JobManager.API.Workes;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using JobManager.API.Persistence.Model;
+using JobManager.API.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -118,14 +119,19 @@ app.MapGet("/api/v2/jobs", async () =>
     return Results.Ok(jobs);
 });
 
-app.MapPost("/api/jobs/{id}/applications", async (int id, JobAplication application,[FromServices] AppDbContext context, [FromServices] IConfiguration configuration) =>
+app.MapPost("/api/jobs/{id}/applications", async (int id, JobApplicationInputModel input,[FromServices] AppDbContext context, [FromServices] IConfiguration configuration) =>
 {
     var job = await context.Jobs.SingleOrDefaultAsync(j => j.Id == id);
     if (job == null)
     {
         return Results.NotFound();
     }
-    application.JobId = id;
+    var application = new JobAplication
+    {
+        JobId = id,
+        CandidateName = input.CandidateName,
+        CandidateEmail = input.CandidateEmail
+    };
     await context.JobApplications.AddAsync(application);
     await context.SaveChangesAsync();
 
@@ -145,7 +151,7 @@ app.MapPost("/api/jobs/{id}/applications", async (int id, JobAplication applicat
 });
 
 //DynamoDb
-app.MapPost("/api/v2/jobs/{id}/applications", async (int id, JobAplication application, [FromServices] IConfiguration configuration) =>
+app.MapPost("/api/v2/jobs/{id}/applications", async (int id, JobApplicationInputModel input, [FromServices] IConfiguration configuration) =>
 {
     var dbClient = new AmazonDynamoDBClient(RegionEndpoint.SAEast1);
     var db = new DynamoDBContext(dbClient);
@@ -159,9 +165,8 @@ app.MapPost("/api/v2/jobs/{id}/applications", async (int id, JobAplication appli
     var model = new JobApplicationDbModel
     {
         Id = Guid.NewGuid().ToString(),
-        CandidateName = application.CandidateName,
-        CandidateEmail = application.CandidateEmail,
-        CVUrl = application.CVUrl
+        CandidateName = input.CandidateName,
+        CandidateEmail = input.CandidateEmail
     };
 
     job.Applications.Add(model);
@@ -176,7 +181,7 @@ app.MapPost("/api/v2/jobs/{id}/applications", async (int id, JobAplication appli
     var request = new SendMessageRequest
     {
         QueueUrl = queue,
-        MessageBody = $"New job application received for job {id}. Candidate: {application.CandidateName}, Email: {application.CandidateEmail}"
+        MessageBody = $"New job application received for job {id}. Candidate: {input.CandidateName}, Email: {input.CandidateEmail}"
     };
 
     var result = await sqs.SendMessageAsync(request);

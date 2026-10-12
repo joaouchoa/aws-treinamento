@@ -50,7 +50,7 @@ Content-Type: application/json
 GET {{JobManager.API_HostAddress}}/v2/jobs
 
 ### Apply to a job (DynamoDB)
-POST {{JobManager.API_HostAddress}}/v2/jobs/3/apply
+POST {{JobManager.API_HostAddress}}/v2/jobs/2/applications
 Content-Type: application/json
 
 {
