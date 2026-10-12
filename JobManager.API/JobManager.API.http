@@ -24,8 +24,17 @@ Content-Type: application/json
   "candidateEmail": "john.doe@example.com"
 }
 
+### Apply to a job (DynamoDb)
+POST {{JobManager.API_HostAddress}}/v2/jobs/2/applications
+Content-Type: application/json
+
+{
+  "candidateName": "John Doe",
+  "candidateEmail": "john.doe@example.com"
+}
+
 ### Create a new job (DynamoDB)
-POST {{JobManager.API_HostAddress}}/jobs-v2
+POST {{JobManager.API_HostAddress}}/v2/jobs
 Content-Type: application/json
 
 {
@@ -38,10 +47,10 @@ Content-Type: application/json
 }
 
 ### Get all jobs (DynamoDB)
-GET {{JobManager.API_HostAddress}}/jobs-v2
+GET {{JobManager.API_HostAddress}}/v2/jobs
 
 ### Apply to a job (DynamoDB)
-POST {{JobManager.API_HostAddress}}/jobs-v2/2/apply
+POST {{JobManager.API_HostAddress}}/v2/jobs/3/apply
 Content-Type: application/json
 
 {
