@@ -17,7 +17,8 @@ namespace JobManager.API.Workes
         {
             var client = new AmazonSQSClient(RegionEndpoint.SAEast1);
 
-            var queueUrl = _configuration["AWS:SQSQueueUrl"] ?? string.Empty;
+            var queueUrlResponse = await client.GetQueueUrlAsync("formacaoawsdotnet", stoppingToken);
+            var queueUrl = queueUrlResponse.QueueUrl;
 
             while (!stoppingToken.IsCancellationRequested)
             {
